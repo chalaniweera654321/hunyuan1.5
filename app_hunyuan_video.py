@@ -48,11 +48,6 @@ with torch.inference_mode():
     clip = DualCLIPLoader.load_clip(CLIP_NAME1, CLIP_NAME2, CLIP_TYPE, "default")[0]
     print(f"done ({time.time()-t0:.1f}s)")
 
-    print("[2/5] Loading CLIP Vision (sigclip)... ", end="", flush=True)
-    t0 = time.time()
-    clip_vision = CLIPVisionLoader.load_clip(CLIP_VISION_NAME)[0]
-    print(f"done ({time.time()-t0:.1f}s)")
-
     print("[3/5] Loading VAE... ", end="", flush=True)
     t0 = time.time()
     vae = VAELoader.load_vae(VAE_NAME)[0]
