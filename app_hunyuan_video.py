@@ -37,7 +37,7 @@ CLIP_NAME1       = "qwen_2.5_vl_7b_fp8_scaled.safetensors"
 CLIP_NAME2       = "byt5_small_glyphxl_fp16.safetensors"
 CLIP_TYPE        = "hunyuan_video_15"
 CLIP_VISION_NAME = "sigclip_vision_patch14_384.safetensors"
-UNET_NAME        = "hunyuanvideo1.5_720p_i2v_fp16.safetensors"
+UNET_NAME        = "hunyuanvideo1.5_720p_t2v_fp16.safetensors"
 VAE_NAME         = "hunyuanvideo15_vae_fp16.safetensors"
 
 startup_start = time.time()
