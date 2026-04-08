@@ -12,6 +12,7 @@ from comfy_extras.nodes_custom_sampler import BasicScheduler
 from comfy_extras.nodes_custom_sampler import KSamplerSelect
 from comfy_extras.nodes_custom_sampler import RandomNoise
 from comfy_extras.nodes_custom_sampler import SamplerCustomAdvanced
+import comfy.model_management as mm
 
 # ── Model Loading ──────────────────────────────────────────────
 print("\n" + "=" * 50)
@@ -22,7 +23,6 @@ DualCLIPLoader         = NODE_CLASS_MAPPINGS["DualCLIPLoader"]()
 UNETLoader             = NODE_CLASS_MAPPINGS["UNETLoader"]()
 VAELoader              = NODE_CLASS_MAPPINGS["VAELoader"]()
 CLIPTextEncode         = NODE_CLASS_MAPPINGS["CLIPTextEncode"]()
-EmptyLatentImage       = NODE_CLASS_MAPPINGS["EmptyLatentImage"]()
 VAEDecode              = NODE_CLASS_MAPPINGS["VAEDecode"]()
 BasicScheduler         = BasicScheduler
 CFGGuider              = CFGGuider
@@ -99,11 +99,15 @@ def generate(input):
     negative_cond = CLIPTextEncode.encode(clip, negative_prompt)[0]
     print(f"done ({time.time()-t0:.1f}s)")
 
-    # ── [2] Create empty latent ────────────────────────────────
-    print("[2/5] Creating empty latent... ", end="", flush=True)
+    # ── [2] Create empty video latent ────────────────────────────
+    print("[2/5] Creating empty video latent... ", end="", flush=True)
     t0 = time.time()
-    latent = EmptyLatentImage.generate(width, height, length, 1)[0]
+    # HunyuanVideo latent shape: [batch=1, C=16, T=length, H//8, W//8]
+    device = mm.intermediate_device()
+    latent_tensor = torch.zeros([1, 16, length, height // 8, width // 8], device=device)
+    latent = {"samples": latent_tensor}
     print(f"done ({time.time()-t0:.1f}s)")
+    print(f"      Latent shape: {list(latent_tensor.shape)}")
 
     # ── [3] ModelSamplingSD3 (shift) ──────────────────────────
     print(f"[3/5] Applying ModelSamplingSD3 (shift={shift})... ", end="", flush=True)
@@ -118,7 +122,7 @@ def generate(input):
     sigmas = BasicScheduler.get_sigmas(patched_model, "simple", steps, denoise)[0]
     guider = CFGGuider.get_guider(patched_model, positive_cond, negative_cond, cfg)[0]
     sampler_obj = KSamplerSelect.get_sampler(sampler_name)[0]
-    noise = RandomNoiseNode.get_noise(seed, "fixed")[0]
+    noise = RandomNoiseNode.execute(noise_seed=seed)[0]
     print(f"done ({time.time()-t0:.1f}s)")
 
     # ── [5] SamplerCustomAdvanced (single-pass sampling) ───────
