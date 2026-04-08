@@ -85,7 +85,6 @@ def load_image_tensor(pil_img: Image.Image):
 @torch.inference_mode()
 def generate(input):
     v = input["input"]
-    start_image_pil  = v["start_image"]          # PIL Image
     positive_prompt  = v["positive_prompt"]
     negative_prompt  = v["negative_prompt"]
     width            = int(v["width"])
@@ -114,13 +113,6 @@ def generate(input):
     negative_cond = CLIPTextEncode.encode(clip, negative_prompt)[0]
     print(f"done ({time.time()-t0:.1f}s)")
 
-    # ── [2] Prepare image tensor + CLIP vision encode ──────────
-    print("[2/7] Encoding CLIP vision on start image... ", end="", flush=True)
-    t0 = time.time()
-    start_image_tensor = load_image_tensor(start_image_pil)
-    clip_vision_output = CLIPVisionEncode.encode(clip_vision, start_image_tensor, "center")[0]
-    print(f"done ({time.time()-t0:.1f}s)")
-
     # ── [3] HunyuanVideo15ImageToVideo (build latent) ──────────
     print("[3/7] Preparing image-to-video latent... ", end="", flush=True)
     t0 = time.time()
@@ -128,8 +120,6 @@ def generate(input):
         positive=positive_cond,
         negative=negative_cond,
         vae=vae,
-        start_image=start_image_tensor,
-        clip_vision_output=clip_vision_output,
         width=width,
         height=height,
         length=length,
